@@ -1,0 +1,4 @@
+future==0.18.2
+pylsl==1.13.6
+pyserial==3.4
+serial==0.0.97
