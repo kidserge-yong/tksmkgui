@@ -10,32 +10,31 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 class tkEMGplot(tk.Frame):
-    def __init__(self, master=None, channel_num=32, period=500):
+    def __init__(self, master=None, channel_num=32, period=100):
         tk.Frame.__init__(self,master)
         self.fig = None
         self.canvas = None
         self.toolbar = None
         self.channel_num = channel_num
         self.period = period
-        self.databuffer = np.zeros((500,32))
+        self.databuffer = np.zeros((period,32))
         self.createWidgets()
     
     def createWidgets(self):
         self.fig = Figure(figsize=(5, 4))
-        self.fig.tight_layout()
 
         self.canvas = FigureCanvasTkAgg(self.fig, master=self.master)  # A tk.DrawingArea.
         self.canvas.draw()
 
         # pack_toolbar=False will make it easier to use a layout manager later on.
-        # self.toolbar = NavigationToolbar2Tk(self.canvas, self.master, pack_toolbar=False)
-        # self.toolbar.update()
+        self.toolbar = NavigationToolbar2Tk(self.canvas, self.master, pack_toolbar=False)
+        self.toolbar.update()
 
         self.canvas.mpl_connect(
             "key_press_event", lambda event: print(f"you pressed {event.key}"))
         self.canvas.mpl_connect("key_press_event", key_press_handler)
 
-        # self.toolbar.pack(side=tkinter.BOTTOM, fill=tkinter.X)
+        self.toolbar.pack(side=tk.TOP, fill=tk.X)
         self.canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
 
         
@@ -46,7 +45,7 @@ class tkEMGplot(tk.Frame):
         self.testbutton = tk.Button(self.master)
         self.testbutton["text"] = "Add one data point"
         self.testbutton["command"] = self.testaddDatapoint
-        self.testbutton.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=1)
+        self.testbutton.pack(side=tk.LEFT, fill=tk.X, expand=False)
 
         self.testplot()
 
@@ -57,8 +56,7 @@ class tkEMGplot(tk.Frame):
 
     def testplot(self):
         self.fig.clear()
-        fz = 100
-        t = np.arange(0, self.period/fz, 1/fz)
+        t = np.arange(0, self.period, 1)
         datas = []
 
         ## Generate data for testing
@@ -76,8 +74,9 @@ class tkEMGplot(tk.Frame):
     def graphplot(self, t, datas):
         max_d, min_d = max(map(max,datas)), min(map(min,datas))
         range_d = round(abs(max_d) + abs(min_d))
+        ax = self.fig.add_subplot(1,1,1)
         for i in range(self.channel_num):
-            ax = self.fig.add_subplot(1,1,1).plot(t, datas[:,i]+(range_d*i), label = ["Channel:" + str(i+1)])        ## potential future problem.
+            ax.plot(t, datas[:,i]+(range_d*i), label = ["Channel:" + str(i+1)])        ## potential future problem.
         
         self.fig.axes[0].set_yticks(np.arange(0, self.channel_num*range_d, range_d))
 
@@ -100,6 +99,8 @@ class tkEMGplot(tk.Frame):
         fz = 250
         t = np.arange(0, self.period/fz, 1/fz)
         self.graphplot(t, self.databuffer)
+
+        
 
 if __name__ == '__main__':
     root = tk.Tk()
