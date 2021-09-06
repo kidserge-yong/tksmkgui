@@ -20,6 +20,12 @@ class tkEMGcontrol(tk.Frame):
         self.is_start = False
         
         self.createWidgets()
+
+    def __del__(self):
+        if hasattr(self, 'smk'):
+            self.smk.stop()
+            time.sleep(1.000)
+            del self.smk
     
     def createWidgets(self):
 
@@ -110,11 +116,7 @@ class tkEMGcontrol(tk.Frame):
         print(str(emgtype))
 
 
-    def __del__(self):
-        if hasattr(self, 'smk'):
-            self.smk.stop()
-            time.sleep(1.000)
-            del self.smk
+
 
 if __name__ == '__main__':
     root = tk.Tk()

@@ -94,9 +94,14 @@ class smk_arrayemg():
             return 0
 
         self.__stop_data()
-        self.is_loop = False
         self.is_start = False
         return 1
+
+    def enterloop(self):
+        self.is_loop = True
+
+    def exitloop(self):
+        self.is_loop = False
     
     @threaded
     def mainloop(self, sleep_interval:float = 0.01):
@@ -116,6 +121,8 @@ class smk_arrayemg():
                 break
             if not self.is_loop:
                 break
+            if not self:
+                break
             
             if self.is_start:
                 self.__getdata()
@@ -127,30 +134,32 @@ class smk_arrayemg():
                     self.serial_port.write(command)
         print("break from mainloop")
 
-    def __del__(self):
-        """
-        deconstrutor to take care of lsl and serial port and ensure it correctly closed.
-        """
-        if DEBUG:
-            print("start deconstruct smk_arrayemg")
+    # def __delete__(self):
+    #     """
+    #     deconstrutor to take care of lsl and serial port and ensure it correctly closed.
+    #     """
+    #     print("run smk __delete__")
         
-        self.stop()
-        time.sleep(1.000)
-        self.serial_port.close()
+    #     self.stop()
+    #     self.is_loop = False
+    #     time.sleep(1.000)
+    #     self.serial_port.close()
 
 
     def start_lsl(self):
         """
         initial lsl communication and allow data to send according to number of device in the robot
         """
-        self.__outlet = StreamOutlet(StreamInfo('SMK Array EMG system', 'EMG', 35, 100, 'int16', 'mysmk20191002'))
+        if self.__outlet is None:
+            self.__outlet = StreamOutlet(StreamInfo('SMK Array EMG system', 'EMG', 35, 100, 'int16', 'mysmk20191002'))
         self.is_lsl = True
 
     def stop_lsl(self):
         """
         recycle lsl communication
         """
-        self.__outlet = None
+        if self.__outlet is not None:
+            self.__outlet = None
         self.is_lsl = False
 
     def connect_serial(self, serial_port:serial.tools.list_ports_common.ListPortInfo):
@@ -360,7 +369,7 @@ class smk_arrayemg():
                     pdata = np.hstack((iemg_value, trigger))
                     self.__emg = pdata
                     self.is_new_data = True
-                    if self.is_lsl:
+                    if self.is_lsl and hasattr(self.__outlet, 'push_sample'):
                         self.__outlet.push_sample([int(emg) for emg in pdata])
                     i = i + 70
                 elif i + 70 > data_len:
@@ -437,4 +446,5 @@ if __name__ == "__main__":
     
     smk.stop()
     smk.stop_lsl()
+    smk.exitloop()
     smk.save2File(emg)
